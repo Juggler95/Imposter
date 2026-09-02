@@ -1,0 +1,10 @@
+{% extends "game/layout.html" %}
+{% block body %}
+  <div>
+    <h1>Create Room</h1>
+    <form>
+      <input type="text" name="create_code" placeholder="Room Code" maxlength="10" minlength="4" required>
+      <input type="submit" name="submit" value="Create">
+    </form>
+  </div>
+{% endblock %}
