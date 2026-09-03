@@ -1,0 +1,23 @@
+{% extends "game/layout.html" %}
+{% block body %}
+  {% if message %}
+    <p>{{message}}</p>
+  {% endif %}
+  <div>
+      <h1>Host: {{host}}</h1>
+      {% if is_host %}
+        <button type="button">Close Room</button>
+        <button type="button">Start</button>
+      {% else %}
+        <button type="button">Leave Room</button>
+      {% endif %}
+      <h3>Players:</h3>
+      <ul>
+        {% for player in players %}
+          <p>{{player}}</p>
+        {% endfor %}
+      </ul>
+      <p>Imposter Count: {{room.imposter_count}}</p>
+      <p>Rounds: {{room.rounds}}</p>
+  </div>
+{% endblock %}

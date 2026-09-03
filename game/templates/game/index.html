@@ -1,10 +1,20 @@
 {% extends "game/layout.html" %}
 {% block body %}
+  {% if message %}
+    <p>{{message}}</p>
+  {% endif %}
   <div>
-    <h1>Create Room</h1>
-    <form>
-      <input type="text" name="create_code" placeholder="Room Code" maxlength="10" minlength="4" required>
-      <input type="submit" name="submit" value="Create">
+    <h1>Join Room</h1>
+    <form autocomplete=off action="{% url 'join' %}" method='get'>
+      <input type="text" name="join_code" placeholder="Room Code" maxlength="10" minlength="4" required>
+      <input type="submit" name="submit" value="Join">
     </form>
   </div>
+  {% if room %}
+    <div>
+      <p>Host: {{room.host}}</p>
+      <p>Code: {{room.code}}</p>
+      <a href="{% url 'room' room_id=room.id %}">Enter back into room.</a>
+    </div>
+  {% endif %}
 {% endblock %}
