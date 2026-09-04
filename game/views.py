@@ -1,8 +1,11 @@
+import json
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.views.decorators.csrf import csrf_exempt
 
 
 from .models import User, Room
@@ -10,16 +13,25 @@ from .models import User, Room
 # Create your views here.
 @login_required(login_url='login')
 def index(request):
+    message = ''
+    if 'redirect-message' in request.session:
+        message = request.session['redirect-message']
+        del request.session['redirect-message']
+
     user = User.objects.get(pk=request.user.id)
     rooms = Room.objects.all()
     for room in rooms:
         players = room.players.values_list('username', flat=True)
         if user.username in players:
             return render(request, 'game/index.html', {
-                'room': room
+                'room': room,
+                'message': message
             })
 
-    return render(request, 'game/index.html')
+
+    return render(request, 'game/index.html', {
+        'message': message
+    })
 
 @login_required(login_url='login')
 def create_room(request):
@@ -46,13 +58,22 @@ def create_room(request):
                 "message": 'Invalid code length.'
             })
 
+        for room in Room.objects.all():
+            if host == room.host:
+                request.session['redirect-message'] = f'You are already the host of another room with code: {room.code}'
+                return redirect('index')
+            elif host in room.players.all():
+                request.session['redirect-message'] = f'You are already a player in another room with host: {room.host} and code: {room.code}'
+                return redirect('index')
         room = Room.objects.create(host=host, code=code, imposter_count=imposter_count, rounds=rounds)
         room.save()
         room.players.add(host)
-        return HttpResponse(f'host: {host}, code: {code}, imposter count: {imposter_count}, rounds: {rounds}, players: {room.players.all()}')
+        # return HttpResponse(f'host: {host}, code: {code}, imposter count: {imposter_count}, rounds: {rounds}, players: {room.players.all()}')
+        return redirect('room', room_id=room.id)
     else:
         return render(request, 'game/create_room.html')
 
+@login_required(login_url='login')
 def join_room(request):
     if request.method == 'GET':
         user = User.objects.get(pk=request.user.id)
@@ -87,6 +108,7 @@ def login_view(request):
         return render(request, 'game/login.html')
 
 
+@login_required(login_url='login')
 def logout_view(request):
     logout(request)
     return redirect('login')
@@ -115,18 +137,53 @@ def register_view(request):
     else:
         return render(request, 'game/register.html')
 
-def room_view(request, room_id):
-    room = Room.objects.get(pk=room_id)
-    user = User.objects.get(pk=request.user.id)
-    players = list(room.players.values_list('username', flat=True))
-    is_host = False
-    if user == room.host:
-        is_host = True
+# @csrf_exempt
+@login_required(login_url='login')
+def room_control(request, room_id):
+    try:
+        room = Room.objects.get(pk=room_id)
+    except Room.DoesNotExist:
+        return JsonResponse({'error': 'Room does not exist'}, status=404)
 
-    return render(request, 'game/room.html', {
-        'is_host': is_host,
-        'host': room.host,
-        'players': players,
-        'room': room
-    })
-    # return HttpResponse(f'Host: {room.host}, Code: {room.code}, Players: {players}, Imposter count: {room.imposter_count}, Rounds: {room.rounds}')
+    if request.method == "POST":
+        user = User.objects.get(pk=request.user.id)
+        body = json.loads(request.body)
+        command = body.get('command')
+        if command == 'leave':
+            if user == room.host:
+                return JsonResponse({"error": "You are host, can't leave room"}, status=400)
+            for player in room.players.all():
+                if user == player:
+                    room.players.remove(user)
+                    room.save()
+                    return JsonResponse({"success": "You left the room successfully"}, status=201)
+
+            return JsonResponse({"error": "You are not in this room"}, status=403)
+        elif command == 'close':
+            if user == room.host:
+                room.delete()
+                return JsonResponse({"success": "You closed the room successfully"}, status=201)
+        else:
+            return JsonResponse({'error': 'Not known command argument'}, status=400)
+    else:
+        return redirect('index')
+
+@login_required(login_url='login')
+def room_view(request, room_id):
+    try:
+        room = Room.objects.get(pk=room_id)
+        user = User.objects.get(pk=request.user.id)
+        players = list(room.players.values_list('username', flat=True))
+        is_host = False
+        if user == room.host:
+            is_host = True
+
+        return render(request, 'game/room.html', {
+            'is_host': is_host,
+            'host': room.host,
+            'players': players,
+            'room': room
+        })
+    except Room.DoesNotExist:
+        print('Room not found')
+        return redirect('index')
