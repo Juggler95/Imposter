@@ -4,25 +4,29 @@
   {% if message %}
     <p>{{message}}</p>
   {% endif %}
-    {% if user.is_authenticated %}
-    <div class="room-content-container" data-room_id="{{room.id}}" data-username='{{user.username}}'>
-        <h1>Host: {{host}}</h1>
-        {% if is_host %}
-          <button type="button" id="close-room-btn">Close Room</button>
-          <!-- Will Setup start room functionality later -->
-          <button type="button" id="start-room-btn">Start</button>
-        {% else %}
-          <button type="button" id="leave-room-btn">Leave Room</button>
-        {% endif %}
-        <h3>Players:</h3>
-        <ul>
-          {% for player in players %}
-            <p>{{player}}</p>
-          {% endfor %}
-        </ul>
-        <p>Imposter Count: {{room.imposter_count}}</p>
-        <p>Rounds: {{room.rounds}}</p>
-    </div>
+    {% if not room.is_running %}
+      {% if user.is_authenticated %}
+          <div class="room-content-container" data-room_id="{{room.id}}" data-username='{{user.username}}'>
+              <h1>Host: {{host}}</h1>
+              {% if is_host %}
+                <button type="button" id="close-room-btn">Close Room</button>
+                <!-- Will Setup start room functionality later -->
+                <button type="button" id="start-room-btn">Start</button>
+              {% else %}
+                <button type="button" id="leave-room-btn">Leave Room</button>
+              {% endif %}
+              <h3>Players:</h3>
+              <ul>
+                {% for player in players %}
+                  <p>{{player}}</p>
+                {% endfor %}
+              </ul>
+              <p>Imposter Count: {{room.imposter_count}}</p>
+              <p>Rounds: {{room.rounds}}</p>
+          </div>
+      {% endif %}
+    {% else %}
+      <h1>Game is in progress</h1>
     {% endif %}
 {% endblock %}
 {% block script %}

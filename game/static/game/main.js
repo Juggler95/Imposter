@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   leaveRoomBtn?.addEventListener("click", function () {
     const container = this.parentNode;
     if(confirm('Are you sure you want to leave the room?')){
-      leaveRoom(container.dataset.username, container.dataset.room_id);
+      leaveRoom(container.dataset.room_id);
     }else{
       return false;
     }
@@ -13,14 +13,24 @@ document.addEventListener("DOMContentLoaded", () => {
   closeRoomBtn?.addEventListener("click", function () {
     const container = this.parentNode;
     if(confirm('Are you sure you want to close room?')){
-      closeRoom(container.dataset.username, container.dataset.room_id);
+      closeRoom(container.dataset.room_id);
     }else{
       return false;
     }
   });
+
+  const startRoomBtn = document.getElementById('start-room-btn');
+  startRoomBtn?.addEventListener("click", function() {
+    const container = this.parentNode;
+    if(confirm('Are you sure you want to start the room?')){
+      startRoom(container.dataset.room_id);
+    }else{
+      return false;
+    }
+  })
 });
 
-async function closeRoom(username, room_id) {
+async function closeRoom(room_id) {
   const url = `room_control/${room_id}`;
   try {
     const response = await fetch(url, {
@@ -43,7 +53,7 @@ async function closeRoom(username, room_id) {
   }
 }
 
-async function leaveRoom(username, room_id) {
+async function leaveRoom(room_id) {
   const url = `room_control/${room_id}`;
   try {
     const response = await fetch(url, {
@@ -70,6 +80,29 @@ async function leaveRoom(username, room_id) {
       // this means the user is already not in the room and should be redirect back to the index page
       window.location.href = "/";
     }
+  }
+}
+
+async function startRoom(room_id){
+  const url = `room_control/${room_id}`;
+  try{
+    const response = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        command: "start"
+      }),
+      headers: { "X-CSRFToken": csrftoken },
+      mode: "same-origin",
+    })
+
+    if (!response.ok){
+      throw new Error(`Response status:`)
+    }
+    
+    const result = await response.json();
+    console.log(result);
+  }catch(error){
+    console.error(error.message);
   }
 }
 
