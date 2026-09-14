@@ -28,6 +28,15 @@ document.addEventListener("DOMContentLoaded", () => {
       return false;
     }
   })
+
+  const endGameBtn = document.getElementById('end-game-btn');
+  endGameBtn?.addEventListener("click", function() {
+    if(confirm('Are you sure you want to end the game?')){
+      endGame(this.dataset.room_id);
+    }else{
+      return false;
+    }
+  })
 });
 
 async function closeRoom(room_id) {
@@ -50,6 +59,31 @@ async function closeRoom(room_id) {
     window.location.href = "/";
   } catch (error) {
     console.error(error.message);
+  }
+}
+
+async function endGame(room_id){
+  const url = `game_control/${room_id}`;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        command: "end_game",
+      }),
+      headers: { "X-CSRFToken": csrftoken },
+      mode: "same-origin",
+    });
+    if (!response.ok){
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log(result);
+    if (result.success === "Game ended successfully"){
+      window.location.href = window.location.href;
+    }
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -101,6 +135,9 @@ async function startRoom(room_id){
     
     const result = await response.json();
     console.log(result);
+    if (result.success === "You started the room successfully"){
+      window.location.href = window.location.href;
+    }
   }catch(error){
     console.error(error.message);
   }

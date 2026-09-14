@@ -27,6 +27,12 @@
       {% endif %}
     {% else %}
       <h1>Game is in progress</h1>
+      {% if user.is_authenticated %}
+          <h1>Role: {{user.role}}</h1>
+        {% if is_host %}
+          <button type="button" id="end-game-btn" data-room_id="{{room.id}}">End Game</button>
+        {% endif %}
+      {% endif %}
     {% endif %}
 {% endblock %}
 {% block script %}

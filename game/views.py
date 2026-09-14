@@ -77,8 +77,19 @@ def create_room(request):
 @login_required(login_url='login')
 def game_control(request, room_id):
     room = Room.objects.get(pk=room_id)
-    if room.is_running:
+    body = json.loads(request.body)
+    command = body.get('command')
+
+    def set_room_roles():
         players = list(room.players.all())
+        def set_roles(player, role):
+            player.role = User.Roles.NONE
+            player.save()
+
+            player.role = role
+            player.current_room = room
+            player.save()
+
         imposters_indices = list()
         for _ in range(room.imposter_count):
             loop = True
@@ -92,16 +103,30 @@ def game_control(request, room_id):
         for i in range(len(players)):
             if i in imposters_indices:
                 player = User.objects.get(username=players[i])
-                player.role = User.Roles.IMPOSTER
-                player.current_room = room
-                player.save()
+                set_roles(player, User.Roles.IMPOSTER)
+
             else:
                 player = User.objects.get(username=players[i])
-                player.role = User.Roles.STANDARD
-                player.current_room = room
-                player.save()
+                #reset old roles before giving new one.
+                set_roles(player, User.Roles.STANDARD)
+                
+    def end_game():
+        players = list(room.players.values_list('username', flat=True))
+        for p in players:
+            player = User.objects.get(username=p)
+            player.role = User.Roles.NONE
+            player.current_room = None
+            player.save()
+        room.is_running = False
+        room.save()
 
-        
+    if room.is_running:
+        if command == 'start':
+            set_room_roles()
+            return JsonResponse({"success": "Roles have been set successfully"}, status=201)
+        elif command == 'end_game':
+            end_game()
+            return JsonResponse({"success": "Game ended successfully"}, status=201)
 
 @login_required(login_url='login')
 def join_room(request):
@@ -189,6 +214,12 @@ def room_control(request, room_id):
                 if user == player:
                     room.players.remove(user)
                     room.save()
+                    players = list(room.players.values_list('username', flat=True))
+                    for p in players:
+                        player = User.objects.get(username=p)
+                        player.role = User.Roles.NONE
+                        player.save()
+                        # player.current_room = None
                     return JsonResponse({"success": "You left the room successfully"}, status=201)
 
             return JsonResponse({"error": "You are not in this room"}, status=403)
