@@ -22,8 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const startRoomBtn = document.getElementById('start-room-btn');
   startRoomBtn?.addEventListener("click", function() {
     const container = this.parentNode;
+    const player_selector = document.getElementById('starting-player-selector');
+    const players = document.getElementById('starting-player-selector').dataset.players;
     if(confirm('Are you sure you want to start the room?')){
-      startRoom(container.dataset.room_id);
+      console.log(players);
+      startRoom(container.dataset.room_id, players);
     }else{
       return false;
     }
@@ -117,13 +120,14 @@ async function leaveRoom(room_id) {
   }
 }
 
-async function startRoom(room_id){
+async function startRoom(room_id, players){
   const url = `room_control/${room_id}`;
   try{
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify({
-        command: "start"
+        command: "start",
+        players: players
       }),
       headers: { "X-CSRFToken": csrftoken },
       mode: "same-origin",

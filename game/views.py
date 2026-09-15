@@ -207,6 +207,7 @@ def room_control(request, room_id):
         user = User.objects.get(pk=request.user.id)
         body = json.loads(request.body)
         command = body.get('command')
+        players = body.get('players') if body.get('players') else None
         if command == 'leave':
             if user == room.host:
                 return JsonResponse({"error": "You are host, can't leave room"}, status=400)
@@ -231,6 +232,25 @@ def room_control(request, room_id):
             if user == room.host and room.is_running == False:
                 room.is_running = True
                 room.save()
+                players_list = list()
+                # list taken from javascript body is seperated by each character
+                # this part of the code converts that broken list into a python list containing each player name
+                if players != None:
+                    player_str = ""
+                    in_word = False
+                    for c in players:
+                        if not in_word:
+                            if c == '\'':
+                                in_word = True
+                        else:
+                            if c == '\'':
+                                players_list.append(player_str)
+                                player_str = ""
+                                in_word = False
+                            else:
+                                player_str += c
+                    print(players_list)
+
                 game_control(request, room_id)
                 return JsonResponse({"success": "You started the room successfully"}, status=201)
         else:
