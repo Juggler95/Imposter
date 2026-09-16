@@ -230,8 +230,6 @@ def room_control(request, room_id):
                 return JsonResponse({"success": "You closed the room successfully"}, status=201)
         elif command == 'start':
             if user == room.host and room.is_running == False:
-                room.is_running = True
-                room.save()
                 players_list = list()
                 # list taken from javascript body is seperated by each character
                 # this part of the code converts that broken list into a python list containing each player name
@@ -249,8 +247,40 @@ def room_control(request, room_id):
                                 in_word = False
                             else:
                                 player_str += c
-                    print(players_list)
 
+
+                # Player de-sync checks
+                backend_players = list(room.players.all())
+                backend_players_usernames = list()
+
+                # check frontned for desync with users in the backend
+                for p in backend_players:
+                    backend_players_usernames.append(p.username)
+
+                if len(backend_players_usernames) != len(players_list):
+                    return JsonResponse({"error": f"Player is not in frontend players list but is in backend"}, status=400)
+
+                # check if backend has anying players not in the frontend
+                # this is for if a player leaves and the frontend hasn't updated yet but that backend has
+                for name in players_list:
+                    if name not in backend_players_usernames:
+                        return JsonResponse({"error": f"Player is in frontend players list but not in backend"}, status=400)
+
+                # set and valididate first player
+                first_player = body.get('first_player')
+                if first_player != None:
+                    # validiate first player is a valid player
+                    if first_player in players_list:
+                        # set first player
+                        room.first_player = User.objects.get(username=first_player)
+                    else:
+                        return JsonResponse({"error": f"The given first player was not in the players_list"}, status=400)
+                else:
+                    return JsonResponse({"error": f"first player gave returned None"}, status=400)
+
+
+                room.is_running = True
+                room.save()
                 game_control(request, room_id)
                 return JsonResponse({"success": "You started the room successfully"}, status=201)
         else:

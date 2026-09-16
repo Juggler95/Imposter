@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const players = document.getElementById('starting-player-selector').dataset.players;
     if(confirm('Are you sure you want to start the room?')){
       console.log(players);
-      startRoom(container.dataset.room_id, players);
+      startRoom(container.dataset.room_id, player_selector);
     }else{
       return false;
     }
@@ -120,20 +120,32 @@ async function leaveRoom(room_id) {
   }
 }
 
-async function startRoom(room_id, players){
+async function startRoom(room_id, player_selector){
+  const players = player_selector.dataset.players;
+  const first_player = player_selector.value;
+
   const url = `room_control/${room_id}`;
   try{
+    if(players.includes(first_player) === false){
+      throw new Error(`Selected first player is not valid player`);
+    }
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify({
         command: "start",
-        players: players
+        players: players,
+        first_player: first_player
       }),
       headers: { "X-CSRFToken": csrftoken },
       mode: "same-origin",
     })
 
     if (!response.ok){
+      output = await response.json();
+      if (output.error === "Player is not in frontend players list but is in backend" || output.error === "Player is in frontend players list but not in backend"){
+        alert(`${output.error}. Please try to start the game again`);
+        window.location.href = window.location.href;
+      }
       throw new Error(`Response status:`)
     }
     
@@ -142,6 +154,7 @@ async function startRoom(room_id, players){
     if (result.success === "You started the room successfully"){
       window.location.href = window.location.href;
     }
+
   }catch(error){
     console.error(error.message);
   }
