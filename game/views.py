@@ -19,7 +19,11 @@ def index(request):
         message = request.session['redirect-message']
         del request.session['redirect-message']
 
+
     user = User.objects.get(pk=request.user.id)
+
+    if not user.current_room == None:
+        return redirect('room', room_id=user.current_room.id)
     rooms = Room.objects.all()
     for room in rooms:
         players = room.players.values_list('username', flat=True)
@@ -72,11 +76,16 @@ def create_room(request):
         # return HttpResponse(f'host: {host}, code: {code}, imposter count: {imposter_count}, rounds: {rounds}, players: {room.players.all()}')
         return redirect('room', room_id=room.id)
     else:
+        if not request.user.current_room == None:
+            return redirect('room', room_id=request.user.current_room.id)
         return render(request, 'game/create_room.html')
 
 @login_required(login_url='login')
 def game_control(request, room_id):
-    room = Room.objects.get(pk=room_id)
+    try:
+        room = Room.objects.get(pk=room_id)
+    except Room.DoesNotExist:
+        return JsonResponse({'error': 'Room with provided id does not exist'}, status=404)
     body = json.loads(request.body)
     command = body.get('command')
 
@@ -107,8 +116,26 @@ def game_control(request, room_id):
 
             else:
                 player = User.objects.get(username=players[i])
-                #reset old roles before giving new one.
+                # reset old roles before giving new one.
                 set_roles(player, User.Roles.STANDARD)
+
+    def select_category():
+        category = body.get('category')
+        if request.user == room.current_player:
+            if category == 'point':
+                print('point')
+                return {"success": "Set category to point successfully"}
+            elif category == 'words':
+                print('words')
+                return {"success": "Set category to words successfully"}
+            elif category == 'fingers':
+                print('fingers')
+                return {"success": "Set category to fingers successfully"}
+            elif category == 'hands':
+                print('hands')
+                return {"success": "Set category to hands successfully"}
+        else:
+            return {"error": "User request was not from current player"}
                 
     def end_game():
         players = list(room.players.values_list('username', flat=True))
@@ -117,6 +144,7 @@ def game_control(request, room_id):
             player.role = User.Roles.NONE
             player.current_room = None
             player.save()
+        room.first_player = None
         room.is_running = False
         room.save()
 
@@ -124,6 +152,17 @@ def game_control(request, room_id):
         if command == 'start':
             set_room_roles()
             return JsonResponse({"success": "Roles have been set successfully"}, status=201)
+        elif command == 'select_category':
+            output = select_category()
+            #TODO: need to actually update DB with the selected category
+            if output == None:
+                return JsonResponse({"error": "Select category returned output of None"}, status=400)
+            elif 'success' in output.keys():
+                return JsonResponse({"success": f"{output['success']}"}, status=201)
+            elif 'error' in output.keys():
+                return JsonResponse({"error": f"{output['error']}"}, status=403)
+            else:
+                return JsonResponse({"error": "output returned unknown key"}, status=400)
         elif command == 'end_game':
             end_game()
             return JsonResponse({"success": "Game ended successfully"}, status=201)
@@ -131,7 +170,10 @@ def game_control(request, room_id):
 @login_required(login_url='login')
 def join_room(request):
     if request.method == 'GET':
-        user = User.objects.get(pk=request.user.id)
+        try:
+            user = User.objects.get(pk=request.user.id)
+        except User.DoesNotExist:
+            return JsonResponse({"error": "User does not exist"})
         code = request.GET.get('join_code')
         try:
             room = Room.objects.get(code=code)
@@ -195,7 +237,6 @@ def register_view(request):
     else:
         return render(request, 'game/register.html')
 
-# @csrf_exempt
 @login_required(login_url='login')
 def room_control(request, room_id):
     try:
@@ -204,7 +245,11 @@ def room_control(request, room_id):
         return JsonResponse({'error': 'Room does not exist'}, status=404)
 
     if request.method == "POST":
-        user = User.objects.get(pk=request.user.id)
+        try:
+            user = User.objects.get(pk=request.user.id)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User does not exist'}, status=400)
+
         body = json.loads(request.body)
         command = body.get('command')
         players = body.get('players') if body.get('players') else None
@@ -279,6 +324,7 @@ def room_control(request, room_id):
                     return JsonResponse({"error": f"first player gave returned None"}, status=400)
 
 
+                room.current_player = User.objects.get(username=first_player)
                 room.is_running = True
                 room.save()
                 game_control(request, room_id)

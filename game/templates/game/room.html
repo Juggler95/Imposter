@@ -40,6 +40,15 @@
       <!-- Game in progress -->
       {% if user.is_authenticated %}
           <h1>Role: {{user.role}}</h1>
+        {% if user == room.current_player %}
+          <div data-room_id="{{room.id}}">
+            <h3>Select Category</h3>
+            <button type="button" class="categories" id="point">Point</button>
+            <button type="button" class="categories" id="words">Words</button>
+            <button type="button" class="categories" id="fingers">Fingers</button>
+            <button type="button" class="categories" id="hands">Hands</button>
+          </div>
+        {% endif %}
         {% if is_host %}
           <button type="button" id="end-game-btn" data-room_id="{{room.id}}">End Game</button>
         {% endif %}

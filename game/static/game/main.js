@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }else{
       return false;
     }
-  })
+  });
 
   const endGameBtn = document.getElementById('end-game-btn');
   endGameBtn?.addEventListener("click", function() {
@@ -39,7 +39,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }else{
       return false;
     }
-  })
+  });
+
+  document.querySelectorAll('.categories').forEach((button) => {
+    button.addEventListener('click', function() {
+      const container = button.parentNode
+      if (button.getAttribute("id") === 'point'){
+        select_category(container.dataset.room_id, 'point')
+      }else if (button.getAttribute("id") === 'words'){
+        select_category(container.dataset.room_id, 'words')
+      }else if (button.getAttribute("id") === 'fingers'){
+        select_category(container.dataset.room_id, 'fingers')
+      }else if (button.getAttribute("id") === 'hands'){
+        select_category(container.dataset.room_id, 'hands')
+      }
+    });
+  });
 });
 
 async function closeRoom(room_id) {
@@ -157,6 +172,30 @@ async function startRoom(room_id, player_selector){
 
   }catch(error){
     console.error(error.message);
+  }
+}
+
+async function select_category(room_id, category){
+  const url = `game_control/${room_id}`
+  try{
+    const response = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        command: "select_category",
+        category: category
+      }),
+      headers: { "X-CSRFToken": csrftoken },
+      mode: "same-origin",
+    })
+
+    if (!response.ok){
+      throw new Error(`Response status:`)
+    }
+    
+    const result = await response.json();
+    console.log(result);
+  }catch(error){
+    console.error(error);
   }
 }
 
