@@ -11,6 +11,12 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import User, Room
 
+POINT = ['Point a the the person to your left', 'Point at the person you think knows the most digits of pi']
+HANDS = ['Raise your hand if your name starts with a letter between "A-M" in the alphabet', 'Raise your hand if your name starts with a letter between "N-A" in the alphabet']
+FINGERS = ["Raise 0 fingers", "Raise the amount of fingers as reality shows you are currently invested into"]
+WORDS = ["Name your favorite Super Hero", "Say something you enjoy doing"]
+IMPOSTER_WORDS = ["Name a character that has Super Powers", "Say something you don't enjoy doing"]
+
 # Create your views here.
 @login_required(login_url='login')
 def index(request):
@@ -81,6 +87,88 @@ def create_room(request):
         return render(request, 'game/create_room.html')
 
 @login_required(login_url='login')
+def game_view(request, room_id):
+    try:
+        room = Room.objects.get(pk=room_id)
+        user = User.objects.get(pk=request.user.id)
+        players = list(room.players.values_list('username', flat=True))
+        is_host = False
+        if user == room.host:
+            is_host = True
+
+        if user.username not in players and not user == room.host:
+            request.session['redirect-message'] = 'You are not a player in this room'
+            return redirect('index')
+
+        if room.selected_category == 'none':
+            room.card_index = None
+            room.selected_category = None
+            room.save()
+            # return redirect(f'{request.META.get('HTTP_REFERER')}')
+            return redirect(f'/room:{room_id}')
+
+        if room.is_running == False:
+            room.card_index = None
+            room.selected_category = None
+            room.save()
+            return redirect(f'/room:{room_id}')
+
+        card = ''
+        imposter_card = 'Your the imposter. Try to blend in'
+        # save card index to DB so it is synced to all players
+        if room.selected_category == 'point':
+            index = None
+            if room.card_index != None:
+                index = room.card_index
+            else:
+                index = random.randrange(len(POINT))
+                room.card_index = index
+                room.save()
+            card = POINT[index]
+
+        elif room.selected_category == 'hands':
+            index = None
+            if room.card_index != None:
+                index = room.card_index
+            else:
+                index = random.randrange(len(HANDS))
+                room.card_index = index
+                room.save()
+            card = HANDS[index]
+        elif room.selected_category == 'fingers':
+            index = None
+            if room.card_index != None:
+                index = room.card_index
+            else:
+                index = random.randrange(len(FINGERS))
+                room.card_index = index
+                room.save()
+            card = FINGERS[index]
+        elif room.selected_category == 'words':
+            index = None
+            if room.card_index != None:
+                index = room.card_index
+            else:
+                index = random.randrange(len(WORDS))
+                room.card_index = index
+                room.save()
+            card = WORDS[index]
+            imposter_card = IMPOSTER_WORDS[index]
+
+        return render(request, 'game/game.html', {
+            'is_host': is_host,
+            'host': room.host,
+            'players': players,
+            'room': room,
+            'card': card,
+            'imposter_card': imposter_card
+        })
+    except Room.DoesNotExist:
+        print('Room not found')
+        request.session['redirect-message'] = 'Room not found'
+        return redirect('index')
+
+@login_required(login_url='login')
 def game_control(request, room_id):
     try:
         room = Room.objects.get(pk=room_id)
@@ -121,19 +209,28 @@ def game_control(request, room_id):
 
     def select_category():
         category = body.get('category')
+        #TODO: fix bug where pressing end game from the game doesn't work
         if request.user == room.current_player:
             if category == 'point':
-                print('point')
+                room.selected_category = room.Categories.POINT
+                room.save()
                 return {"success": "Set category to point successfully"}
             elif category == 'words':
-                print('words')
+                room.selected_category = room.Categories.WORDS
+                room.save()
                 return {"success": "Set category to words successfully"}
             elif category == 'fingers':
-                print('fingers')
+                room.selected_category = room.Categories.FINGERS
+                room.save()
                 return {"success": "Set category to fingers successfully"}
             elif category == 'hands':
-                print('hands')
+                room.selected_category = room.Categories.HANDS
+                room.save()
                 return {"success": "Set category to hands successfully"}
+            else:
+                room.selected_category = room.Categories.NONE
+                room.save()
+                return {"error": "Unknown category"}
         else:
             return {"error": "User request was not from current player"}
                 
@@ -146,6 +243,8 @@ def game_control(request, room_id):
             player.save()
         room.first_player = None
         room.is_running = False
+        room.selected_category = room.Categories.NONE
+        room.card_index = None
         room.save()
 
     if room.is_running:
@@ -154,7 +253,6 @@ def game_control(request, room_id):
             return JsonResponse({"success": "Roles have been set successfully"}, status=201)
         elif command == 'select_category':
             output = select_category()
-            #TODO: need to actually update DB with the selected category
             if output == None:
                 return JsonResponse({"error": "Select category returned output of None"}, status=400)
             elif 'success' in output.keys():
@@ -347,7 +445,6 @@ def room_view(request, room_id):
         if user.username not in players and not user == room.host:
             request.session['redirect-message'] = 'You are not a player in this room'
             return redirect('index')
-
         return render(request, 'game/room.html', {
             'is_host': is_host,
             'host': room.host,

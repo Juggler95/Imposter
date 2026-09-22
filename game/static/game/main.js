@@ -55,6 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+  if(document.getElementById('redirect-to-game') !== null){
+    window.location.href = `game/${document.getElementById('redirect-to-game').dataset.room_id}`
+  }
 });
 
 async function closeRoom(room_id) {
@@ -81,7 +85,7 @@ async function closeRoom(room_id) {
 }
 
 async function endGame(room_id){
-  const url = `game_control/${room_id}`;
+  const url = `/game_control/${room_id}`;
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -193,6 +197,9 @@ async function select_category(room_id, category){
     }
     
     const result = await response.json();
+    if (result.success){
+      window.location.href = `game/${room_id}`
+    }
     console.log(result);
   }catch(error){
     console.error(error);

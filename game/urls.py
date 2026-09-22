@@ -5,6 +5,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('create_room', views.create_room, name='create_room'),
     path('game_control/<int:room_id>', views.game_control, name='game_control'),
+    path('game/<int:room_id>', views.game_view, name='game'),
     path('join_room', views.join_room, name='join'),
     path('login', views.login_view, name='login'),
     path('logout', views.logout_view, name='logout'),

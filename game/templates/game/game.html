@@ -1,0 +1,23 @@
+{% extends "game/layout.html" %}
+{% load static %}
+{% block body %}
+  {% if message %}
+    <p>{{message}}</p>
+  {% endif %}
+    {% if room.is_running %}
+      {% if user.is_authenticated %}
+        <h1>Role: {{user.role}}</h1>
+        {% if user.role == 'standard' %}
+          <p>{{card}}</p>
+        {% elif user.role == 'imposter' %}
+          <p>{{imposter_card}}</p>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+    {% if is_host %}
+        <button type="button" id="end-game-btn" data-room_id="{{room.id}}">End Game</button>
+    {% endif %}
+{% endblock %}
+{% block script %}
+  <script src="{% static 'game/main.js' %}"></script>
+{% endblock %}
