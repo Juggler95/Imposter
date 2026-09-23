@@ -39,8 +39,7 @@
     {% else %}
       <!-- Game in progress -->
       {% if user.is_authenticated %}
-        <h1>Role: {{user.role}}</h1>
-        {% if room.selected_category == 'none' %}
+        {% if room.selected_category == 'none' or room.selected_category == None %}
           {% if user == room.current_player %}
             <div data-room_id="{{room.id}}">
               <h3>Select Category</h3>

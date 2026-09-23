@@ -209,7 +209,6 @@ def game_control(request, room_id):
 
     def select_category():
         category = body.get('category')
-        #TODO: fix bug where pressing end game from the game doesn't work
         if request.user == room.current_player:
             if category == 'point':
                 room.selected_category = room.Categories.POINT
@@ -454,4 +453,23 @@ def room_view(request, room_id):
     except Room.DoesNotExist:
         print('Room not found')
         request.session['redirect-message'] = 'Room not found'
+        return redirect('index')
+
+@login_required(login_url='login')
+def vote_view(request, room_id):
+    if request.method == 'GET':
+        try:
+            room = Room.objects.get(pk=room_id)
+            players = list(room.players.values_list('username', flat=True))
+        except Room.DoesNotExist:
+            request.session['redirect-message'] = 'Room not found'
+            return redirect('index')
+        if request.user.username not in players and not request.user == room.host:
+            request.session['redirect-message'] = 'You are not a player in this room'
+            return redirect('index')
+        return render(request, 'game/vote.html', {
+            'room': room,
+            'players': players
+        })
+    else:
         return redirect('index')

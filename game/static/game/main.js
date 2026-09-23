@@ -59,6 +59,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if(document.getElementById('redirect-to-game') !== null){
     window.location.href = `game/${document.getElementById('redirect-to-game').dataset.room_id}`
   }
+
+  document.querySelectorAll('.vote-btn').forEach((button) => {
+    button.addEventListener('click', function() {
+      const container = button.parentNode
+      console.log(button.dataset.vote_player);
+      // console.log(container.dataset.current_user);
+    });
+  });
 });
 
 async function closeRoom(room_id) {
