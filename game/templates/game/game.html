@@ -15,10 +15,10 @@
       {% endif %}
     {% endif %}
     {% if is_host %}
-        <form action="{% url 'vote' room_id=room.id %}" method="GET">
-            <button type="submit" id="start-voting-btn">Start Voting</button>
-        </form>
-        <button type="button" id="end-game-btn" data-room_id="{{room.id}}">End Game</button>
+      <form action="{% url 'vote' room_id=room.id %}" method="GET">
+          <button type="submit" id="start-voting-btn" class="btn btn-success">Start Voting</button>
+      </form>
+      <button type="button" id="end-game-btn" data-room_id="{{room.id}}" class="btn btn-danger">End Game</button>
     {% endif %}
 {% endblock %}
 {% block script %}

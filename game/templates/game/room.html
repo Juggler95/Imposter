@@ -9,19 +9,24 @@
           <div class="room-content-container" data-room_id="{{room.id}}" data-username='{{user.username}}'>
               <h1>Host: {{host}}</h1>
               {% if is_host %}
-                <button type="button" id="close-room-btn">Close Room</button>
+                <button type="button" id="close-room-btn" class="btn btn-danger">Close Room</button>
               {% endif %}
               <h3>Players:</h3>
-              <ul>
+              <ul id="room-players-list-container">
                 {% for player in players %}
-                  <p>{{player}}</p>
+                  <div class="player-list-item-container">
+                    <p>{{player}}</p>
+                    {% if is_host %}
+                      <button type="button" data-player="{{player}}" class="kick-player btn btn-outline-danger btn-sm">Kick</button>
+                    {% endif %}
+                  </div>
                 {% endfor %}
               </ul>
               <p>Imposter Count: {{room.imposter_count}}</p>
               <p>Rounds: {{room.rounds}}</p>
 
               {% if not is_host %}
-                <button type="button" id="leave-room-btn">Leave Room</button>
+                <button type="button" id="leave-room-btn" class="btn btn-danger">Leave Room</button>
               {% else %}
                 <form>
                   <h3>Select starting player</h3>
@@ -32,7 +37,7 @@
                     {% endfor %}
                   </select>
                 </form>
-                <button type="button" id="start-room-btn">Start</button>
+                <button type="button" class="btn btn-success" id="start-room-btn">Start</button>
               {% endif %}
           </div>
       {% endif %}
@@ -55,7 +60,7 @@
           <span data-room_id="{{room.id}}" id="redirect-to-game"></span>
         {% endif %}
         {% if is_host %}
-          <button type="button" id="end-game-btn" data-room_id="{{room.id}}">End Game</button>
+          <button type="button" id="end-game-btn" class="btn btn-danger" data-room_id="{{room.id}}">End Game</button>
         {% endif %}
       {% endif %}
     {% endif %}

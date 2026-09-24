@@ -9,6 +9,8 @@ class User(AbstractUser):
         IMPOSTER = 'imposter'
     role = models.CharField(choices=Roles, default=Roles.NONE, max_length=10)
     current_room = models.ForeignKey("Room", on_delete=models.CASCADE, null=True, blank=True, related_name="current_room" )
+    votes = models.PositiveIntegerField(default=0)
+    voted = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True, related_name="voted_player")
 
 
 class Room(models.Model):
@@ -27,4 +29,5 @@ class Room(models.Model):
     is_running = models.BooleanField(default=False)
     players = models.ManyToManyField(User, blank=True, null=True, related_name="room_players")
     rounds = models.PositiveIntegerField(default=3)
+    voting = models.BooleanField(default=False)
     selected_category = models.CharField(choices=Categories, default=Categories.NONE, max_length=10, null=True, blank=True)

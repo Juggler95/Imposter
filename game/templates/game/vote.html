@@ -7,15 +7,21 @@
     {% if room.is_running %}
       {% if user.is_authenticated %}
         <h1>Discuss and Vote</h1>
-      <div data-current_user="{{user.username}}">
-        {% for player in players %}
-          <button type="button" class='vote-btn' data-vote_player={{player}}>{{player}}</button>
-        {% endfor %}
-      </div>
+        {% if user.voted == None %}
+          <div data-current_user="{{user.username}}" data-room_id="{{room.id}}">
+            {% for player in players %}
+              {% if not player == user.username %}
+                <button type="button" class='vote-btn btn btn-primary' data-vote_player={{player}}>{{player}}</button>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <h3>You voted for {{user.voted.username}}</h3>
+        {% endif %}
       {% endif %}
     {% endif %}
     {% if is_host %}
-        <button type="button" id="end-game-btn" data-room_id="{{room.id}}">End Game</button>
+        <button type="button" id="end-game-btn" class="btn btn-danger" data-room_id="{{room.id}}">End Game</button>
     {% endif %}
 {% endblock %}
 {% block script %}

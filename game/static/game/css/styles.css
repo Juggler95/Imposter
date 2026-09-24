@@ -2,3 +2,17 @@
   align-items: center;
 }
 
+/* room view */
+#room-players-list-container{
+  padding: 0;
+  margin: 0;
+}
+
+.player-list-item-container{
+  border: 2px solid black;
+  border-radius: 0.5rem;
+  padding: 5px;
+  margin-bottom: 1rem;
+  max-width: 10rem;
+}
+

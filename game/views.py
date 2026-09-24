@@ -96,6 +96,9 @@ def game_view(request, room_id):
         if user == room.host:
             is_host = True
 
+        if room.voting:
+            return redirect('vote', room_id=room_id)
+
         if user.username not in players and not user == room.host:
             request.session['redirect-message'] = 'You are not a player in this room'
             return redirect('index')
@@ -232,18 +235,21 @@ def game_control(request, room_id):
                 return {"error": "Unknown category"}
         else:
             return {"error": "User request was not from current player"}
-                
+
     def end_game():
         players = list(room.players.values_list('username', flat=True))
         for p in players:
             player = User.objects.get(username=p)
             player.role = User.Roles.NONE
             player.current_room = None
+            player.votes = 0
+            player.voted = None
             player.save()
         room.first_player = None
         room.is_running = False
         room.selected_category = room.Categories.NONE
         room.card_index = None
+        room.voting = False
         room.save()
 
     if room.is_running:
@@ -260,6 +266,27 @@ def game_control(request, room_id):
                 return JsonResponse({"error": f"{output['error']}"}, status=403)
             else:
                 return JsonResponse({"error": "output returned unknown key"}, status=400)
+        elif command == 'vote':
+            if request.user.voted == None:
+                try:
+                    # print(f'voted for player {body.get('voted_player')}')
+                    vp = body.get('voted_player')
+                    print(f'VP {vp}')
+                    voted_player = User.objects.get(username=vp)
+                except User.DoesNotExist:
+                    print(User.objects.get(username=body.get('voted_player')))
+                    return JsonResponse({"error": "voted player does not exist"}, status=400)
+                if voted_player == request.user:
+                    return JsonResponse({'error': f"You cannot vote for yourself"}, status=400)
+                voted_player.votes += 1
+                request.user.voted = voted_player
+                voted_player.save()
+                request.user.save()
+                print(voted_player.votes)
+                print(request.user.voted)
+                return JsonResponse({'success': f"successfully voted for {voted_player.username}"}, status=201)
+            else:
+                return JsonResponse({'error': f"You already have voted. You cannot vote twice"}, status=400)
         elif command == 'end_game':
             end_game()
             return JsonResponse({"success": "Game ended successfully"}, status=201)
@@ -441,6 +468,9 @@ def room_view(request, room_id):
         if user == room.host:
             is_host = True
 
+        if room.voting:
+            return redirect('vote', room_id=room_id)
+
         if user.username not in players and not user == room.host:
             request.session['redirect-message'] = 'You are not a player in this room'
             return redirect('index')
@@ -461,15 +491,27 @@ def vote_view(request, room_id):
         try:
             room = Room.objects.get(pk=room_id)
             players = list(room.players.values_list('username', flat=True))
+            user = User.objects.get(pk=request.user.id)
+            is_host = False
+            if user == room.host:
+                is_host = True
+
+            if room.is_running:
+                room.voting = True
+                room.save()
         except Room.DoesNotExist:
             request.session['redirect-message'] = 'Room not found'
             return redirect('index')
         if request.user.username not in players and not request.user == room.host:
             request.session['redirect-message'] = 'You are not a player in this room'
             return redirect('index')
+        if not room.is_running:
+            return redirect('room', room_id=room.id)
         return render(request, 'game/vote.html', {
             'room': room,
-            'players': players
+            'players': players,
+            'is_host': is_host,
+            'user': user
         })
     else:
         return redirect('index')
