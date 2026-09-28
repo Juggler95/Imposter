@@ -60,11 +60,19 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = `game/${document.getElementById('redirect-to-game').dataset.room_id}`
   }
 
+  document.querySelectorAll('.kick-player').forEach((button) => {
+    button.addEventListener('click', function() {
+      // const container = button.parentNode;
+      console.log(button.dataset.player)
+      kickPlayer(button.dataset.room_id, button.dataset.player);
+    });
+  });
+
   document.querySelectorAll('.vote-btn').forEach((button) => {
     button.addEventListener('click', function() {
-      const container = button.parentNode
+      const container = button.parentNode;
       console.log(button.dataset.vote_player);
-      vote(container.dataset.room_id, button.dataset.vote_player)
+      vote(container.dataset.room_id, button.dataset.vote_player);
       // console.log(container.dataset.current_user);
     });
   });
@@ -118,9 +126,29 @@ async function endGame(room_id){
   }
 }
 
-//TODO: finnish implmenting kick player functionality
-async function kickPlayer(room_id, player_id){
+async function kickPlayer(room_id, player_name){
   const url = `/room_control/${room_id}`;
+  try{
+    const response = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        command: "kick",
+        player_name: player_name
+      }),
+      headers: { "X-CSRFToken": csrftoken },
+      mode: "same-origin",
+    });
+
+    if (!response.ok){
+      throw new Error(`Resonse status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log(result);
+    window.location.href = window.location.href;
+  }catch(error){
+    console.error(error);
+  }
 }
 
 async function vote(room_id, voted_player){

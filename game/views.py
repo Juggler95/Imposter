@@ -250,6 +250,7 @@ def game_control(request, room_id):
         room.selected_category = room.Categories.NONE
         room.card_index = None
         room.voting = False
+        room.votes_casted = 0
         room.save()
 
     if room.is_running:
@@ -269,21 +270,39 @@ def game_control(request, room_id):
         elif command == 'vote':
             if request.user.voted == None:
                 try:
-                    # print(f'voted for player {body.get('voted_player')}')
                     vp = body.get('voted_player')
-                    print(f'VP {vp}')
                     voted_player = User.objects.get(username=vp)
                 except User.DoesNotExist:
-                    print(User.objects.get(username=body.get('voted_player')))
                     return JsonResponse({"error": "voted player does not exist"}, status=400)
                 if voted_player == request.user:
                     return JsonResponse({'error': f"You cannot vote for yourself"}, status=400)
                 voted_player.votes += 1
+                room.votes_casted += 1
                 request.user.voted = voted_player
                 voted_player.save()
                 request.user.save()
-                print(voted_player.votes)
-                print(request.user.voted)
+                room.save()
+                # figure out who has the most votes
+                if room.votes_casted == room.players.count():
+                    most_voted_player = None
+                    not_unanimous = False
+                    for p in room.players.all():
+                        if most_voted_player == None:
+                            most_voted_player = p
+                        else:
+                            if p.votes > most_voted_player.votes:
+                                most_voted_player = p
+                            elif p.votes == most_voted_player.votes:
+                                # I could just stop counting votes in this case and just start next round
+                                not_unanimous = True
+                    if not_unanimous == False:
+                        p.voted_out = True
+                        p.save()
+                        #TODO: need to redirect to the next round
+                        #TODO: figure out how to decide the next current player
+                    else:
+                        print('the vote was not unanimous')
+
                 return JsonResponse({'success': f"successfully voted for {voted_player.username}"}, status=201)
             else:
                 return JsonResponse({'error': f"You already have voted. You cannot vote twice"}, status=400)
@@ -429,7 +448,7 @@ def room_control(request, room_id):
                 if len(backend_players_usernames) != len(players_list):
                     return JsonResponse({"error": f"Player is not in frontend players list but is in backend"}, status=400)
 
-                # check if backend has anying players not in the frontend
+                # check if backend has any players not in the frontend
                 # this is for if a player leaves and the frontend hasn't updated yet but that backend has
                 for name in players_list:
                     if name not in backend_players_usernames:
@@ -447,12 +466,34 @@ def room_control(request, room_id):
                 else:
                     return JsonResponse({"error": f"first player gave returned None"}, status=400)
 
+                # make sure more than 1 person is in room.
+                if len(backend_players) <= 1:
+                    return JsonResponse({"error": f"Cannot start the room with 1 or less people in the room"}, status=400)
+
 
                 room.current_player = User.objects.get(username=first_player)
                 room.is_running = True
                 room.save()
                 game_control(request, room_id)
                 return JsonResponse({"success": "You started the room successfully"}, status=201)
+        elif command == 'kick':
+            if request.user == room.host:
+                player_name = body.get('player_name')
+                try:
+                    player = User.objects.get(username=player_name)
+                    if player == room.host:
+                        return JsonResponse({"error": f"Can't kick host"}, status=400)
+                except User.DoesNotExist:
+                    return JsonResponse({"error": f"Player attempting to kick is not known"}, status=400)
+                player.votes = 0
+                player.role = User.Roles.NONE
+                player.current_room = None
+                player.voted = None
+                room.players.remove(player)
+                room.save()
+                return JsonResponse({"success": f"Successfully kicked {player.username} from the room"}, status=201)
+            else:
+                return JsonResponse({"error": f"You do not have premission to run this function"}, status=403)
         else:
             return JsonResponse({'error': 'Not known command argument'}, status=400)
     else:

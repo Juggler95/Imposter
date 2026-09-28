@@ -17,7 +17,9 @@
                   <div class="player-list-item-container">
                     <p>{{player}}</p>
                     {% if is_host %}
-                      <button type="button" data-player="{{player}}" class="kick-player btn btn-outline-danger btn-sm">Kick</button>
+                      {% if not player == room.host.username %}
+                        <button type="button" data-player="{{player}}" data-room_id="{{room.id}}" class="kick-player btn btn-outline-danger btn-sm">Kick</button>
+                      {% endif %}
                     {% endif %}
                   </div>
                 {% endfor %}
