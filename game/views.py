@@ -244,6 +244,7 @@ def game_control(request, room_id):
             player.current_room = None
             player.votes = 0
             player.voted = None
+            player.voted_out = False
             player.save()
         room.first_player = None
         room.is_running = False
@@ -283,25 +284,7 @@ def game_control(request, room_id):
                 request.user.save()
                 room.save()
                 # figure out who has the most votes
-                if room.votes_casted == room.players.count():
-                    most_voted_player = None
-                    not_unanimous = False
-                    for p in room.players.all():
-                        if most_voted_player == None:
-                            most_voted_player = p
-                        else:
-                            if p.votes > most_voted_player.votes:
-                                most_voted_player = p
-                            elif p.votes == most_voted_player.votes:
-                                # I could just stop counting votes in this case and just start next round
-                                not_unanimous = True
-                    if not_unanimous == False:
-                        p.voted_out = True
-                        p.save()
-                        #TODO: need to redirect to the next round
-                        #TODO: figure out how to decide the next current player
-                    else:
-                        print('the vote was not unanimous')
+                calculate_votes(request, room)
 
                 return JsonResponse({'success': f"successfully voted for {voted_player.username}"}, status=201)
             else:
@@ -309,6 +292,36 @@ def game_control(request, room_id):
         elif command == 'end_game':
             end_game()
             return JsonResponse({"success": "Game ended successfully"}, status=201)
+
+def calculate_votes(request, room):
+    if room.votes_casted == room.players.count():
+        def most_frequiet(voted_players):
+            return max(set(voted_players), key=voted_players.count)
+
+        valid_players = list()
+        for v in room.players.all():
+            if not v.voted_out:
+                valid_players.append(v)
+
+        voted_players = list()
+        for vp in valid_players:
+            voted_players.append(vp.voted)
+
+        most_votes = most_frequiet(voted_players)
+        votes_casted = list()
+        for p in valid_players:
+            if p.voted == most_votes:
+                votes_casted.append(p.voted)
+
+        if len(votes_casted) == len(valid_players) - 1:
+            most_votes.voted_out = True
+            most_votes.save()
+            print(most_votes)
+            room.voting = False
+            room.save()
+            #TODO: need to create a route to display how many votes everyone got and where you can set the next curent player
+        else:
+            print('the vote was not unanimous')
 
 @login_required(login_url='login')
 def join_room(request):
@@ -414,6 +427,12 @@ def room_control(request, room_id):
             return JsonResponse({"error": "You are not in this room"}, status=403)
         elif command == 'close':
             if user == room.host:
+                for p in room.players.all():
+                    p.voted = None
+                    p.voted_out = False
+                    p.votes = 0
+                    p.role = User.Roles.NONE
+                    p.save()
                 room.delete()
                 return JsonResponse({"success": "You closed the room successfully"}, status=201)
         elif command == 'start':
@@ -537,6 +556,9 @@ def vote_view(request, room_id):
             if user == room.host:
                 is_host = True
 
+            if room.selected_category == 'none':
+                return redirect('room', room_id=room.id)
+
             if room.is_running:
                 room.voting = True
                 room.save()
@@ -552,7 +574,8 @@ def vote_view(request, room_id):
             'room': room,
             'players': players,
             'is_host': is_host,
-            'user': user
+            'user': user,
+            'display_votes': False
         })
     else:
         return redirect('index')
