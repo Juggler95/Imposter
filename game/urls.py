@@ -12,5 +12,6 @@ urlpatterns = [
     path('register', views.register_view, name='register'),
     path('room:<int:room_id>', views.room_view, name='room'),
     path('room_control/<int:room_id>', views.room_control, name="room_control"),
-    path('vote:<int:room_id>', views.vote_view, name='vote')
+    path('vote:<int:room_id>', views.vote_view, name='vote'),
+    path('display_votes:<int:room_id>', views.display_votes, name='display_votes')
 ]

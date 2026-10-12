@@ -1,0 +1,33 @@
+{% extends "game/layout.html" %}
+{% load static %}
+{% block body %}
+  {% if message %}
+    <p>{{message}}</p>
+  {% endif %}
+    {% if room.is_running %}
+      {% if user.is_authenticated %}
+        <h1>Votes</h1>
+        {% for player in valid_players %}
+          {% if player.voted_out %}
+            <div style="background-color: red;">
+              <h3>{{player.username}}</h3>
+              <p>Votes: {{player.votes}}</p>
+            </div>
+          {% else %}
+            <div style="background-color: green;">
+              <h3>{{player.username}}</h3>
+              <p>Votes: {{player.votes}}</p>
+            </div>
+          {% endif %}
+       {% endfor %}
+      {% endif %}
+    {% endif %}
+
+    {% if is_host %}
+        <button type="button" id="end-game-btn" class="btn btn-danger" data-room_id="{{room.id}}">End Game</button>
+    {% endif %}
+
+{% endblock %}
+{% block script %}
+  <script src="{% static 'game/main.js' %}"></script>
+{% endblock %}

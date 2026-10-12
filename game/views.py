@@ -284,8 +284,7 @@ def game_control(request, room_id):
                 request.user.save()
                 room.save()
                 # figure out who has the most votes
-                calculate_votes(request, room)
-
+                # calculate_votes(request, room)
                 return JsonResponse({'success': f"successfully voted for {voted_player.username}"}, status=201)
             else:
                 return JsonResponse({'error': f"You already have voted. You cannot vote twice"}, status=400)
@@ -293,35 +292,6 @@ def game_control(request, room_id):
             end_game()
             return JsonResponse({"success": "Game ended successfully"}, status=201)
 
-def calculate_votes(request, room):
-    if room.votes_casted == room.players.count():
-        def most_frequiet(voted_players):
-            return max(set(voted_players), key=voted_players.count)
-
-        valid_players = list()
-        for v in room.players.all():
-            if not v.voted_out:
-                valid_players.append(v)
-
-        voted_players = list()
-        for vp in valid_players:
-            voted_players.append(vp.voted)
-
-        most_votes = most_frequiet(voted_players)
-        votes_casted = list()
-        for p in valid_players:
-            if p.voted == most_votes:
-                votes_casted.append(p.voted)
-
-        if len(votes_casted) == len(valid_players) - 1:
-            most_votes.voted_out = True
-            most_votes.save()
-            print(most_votes)
-            room.voting = False
-            room.save()
-            #TODO: need to create a route to display how many votes everyone got and where you can set the next curent player
-        else:
-            print('the vote was not unanimous')
 
 @login_required(login_url='login')
 def join_room(request):
@@ -562,6 +532,13 @@ def vote_view(request, room_id):
             if room.is_running:
                 room.voting = True
                 room.save()
+
+            valid_players = list()
+            for p in room.players.all():
+                if not p.voted_out:
+                    valid_players.append(p)
+            if room.votes_casted == len(valid_players) or room.votes_casted == len(valid_players) + 1:
+                return redirect('display_votes', room_id=room.id)
         except Room.DoesNotExist:
             request.session['redirect-message'] = 'Room not found'
             return redirect('index')
@@ -579,3 +556,63 @@ def vote_view(request, room_id):
         })
     else:
         return redirect('index')
+
+def calculate_votes(request, room):
+    vp = list()
+    for p in room.players.all():
+        if p.voted != None:
+            vp.append(p)
+    if room.votes_casted == len(vp):
+        def most_frequiet(voted_players):
+            return max(set(voted_players), key=voted_players.count)
+
+        valid_players = list()
+        for v in room.players.all():
+            if not v.voted_out:
+                valid_players.append(v)
+
+        voted_players = list()
+        for vp in valid_players:
+            voted_players.append(vp.voted)
+
+        most_votes = most_frequiet(voted_players)
+        votes_casted = list()
+        for p in valid_players:
+            if p.voted == most_votes:
+                votes_casted.append(p.voted)
+
+        if len(votes_casted) == len(valid_players) - 1:
+            most_votes.voted_out = True
+            most_votes.save()
+            print(most_votes)
+            room.voting = False
+            room.save()
+
+@login_required(login_url='login')
+def display_votes(request, room_id):
+    room = Room.objects.get(pk=room_id)
+    if request.user == room.host:
+        is_host = True
+    else:
+        is_host = False
+
+    if not room.is_running:
+        return redirect('room', room_id=room.id)
+    players = room.players.all()
+    valid_players = list()
+    calculate_votes(request, room)
+    for p in players:
+        if p.voted != None:
+            valid_players.append(p)
+
+    #TODO: Add next round button and also display rounds
+    #TODO: make sure voted out players don't get to vote but still let them see what the questions are
+
+    return render(request, 'game/display_votes.html', {
+        'room': room,
+        'valid_players': valid_players,
+        'is_host': is_host
+    })
+
+
+

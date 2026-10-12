@@ -110,7 +110,6 @@ async function endGame(room_id){
         command: "end_game",
       }),
       headers: { "X-CSRFToken": csrftoken },
-      mode: "same-origin",
     });
     if (!response.ok){
       throw new Error(`Response status: ${response.status}`);
