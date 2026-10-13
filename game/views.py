@@ -605,14 +605,17 @@ def display_votes(request, room_id):
         if p.voted != None:
             valid_players.append(p)
 
+    
+    for player in players:
+        if player.role == User.Roles.IMPOSTER:
+            imposter = player
+
     #TODO: Add next round button and also display rounds
     #TODO: make sure voted out players don't get to vote but still let them see what the questions are
 
     return render(request, 'game/display_votes.html', {
         'room': room,
         'valid_players': valid_players,
-        'is_host': is_host
+        'is_host': is_host,
+        'imposter': imposter
     })
-
-
-

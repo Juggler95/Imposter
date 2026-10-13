@@ -11,7 +11,7 @@
           {% if player.voted_out %}
             <div style="background-color: red;">
               <h3>{{player.username}}</h3>
-              <p>Votes: {{player.votes}}</p>
+              <p>Votes: {{player.votes}}. Role: {{player.role}}</p>
             </div>
           {% else %}
             <div style="background-color: green;">
@@ -23,8 +23,16 @@
       {% endif %}
     {% endif %}
 
+    {% if imposter.voted_out %}
+      <p>You have found the imposter</p>
+    {% else %}
+      {% if is_host %}
+        <button type="button" id="next-round-btn" class="btn btn-success">Next Round</button>
+      {% endif %}
+    {% endif %}
+
     {% if is_host %}
-        <button type="button" id="end-game-btn" class="btn btn-danger" data-room_id="{{room.id}}">End Game</button>
+      <button type="button" id="end-game-btn" class="btn btn-danger" data-room_id="{{room.id}}">End Game</button>
     {% endif %}
 
 {% endblock %}
