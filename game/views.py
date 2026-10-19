@@ -51,16 +51,16 @@ def create_room(request):
         code = request.POST['create_code']
         try:
             rounds = int(request.POST['rounds'])
-            imposter_count = int(request.POST['imposter_count'])
+            # imposter_count = int(request.POST['imposter_count'])
         except:
             return render(request, 'game/create_room.html', {
                 "message": 'Could not cast rounds/imposter_count to int'
             })
-        if imposter_count < 1:
-            return render(request, 'game/create_room.html', {
-                "message": 'Imposter count can not be less than 1'
-            })
-        elif rounds < 1:
+        # if imposter_count < 1:
+        #     return render(request, 'game/create_room.html', {
+        #         "message": 'Imposter count can not be less than 1'
+        #     })
+        if rounds < 1:
             return render(request, 'game/create_room.html', {
                 "message": 'Rounds can not be less than 1'
             })
@@ -76,7 +76,8 @@ def create_room(request):
             elif host in room.players.all():
                 request.session['redirect-message'] = f'You are already a player in another room with host: {room.host} and code: {room.code}'
                 return redirect('index')
-        room = Room.objects.create(host=host, code=code, imposter_count=imposter_count, rounds=rounds)
+        # room = Room.objects.create(host=host, code=code, imposter_count=imposter_count, rounds=rounds)
+        room = Room.objects.create(host=host, code=code, rounds=rounds)
         room.save()
         room.players.add(host)
         # return HttpResponse(f'host: {host}, code: {code}, imposter count: {imposter_count}, rounds: {rounds}, players: {room.players.all()}')
@@ -92,6 +93,8 @@ def game_view(request, room_id):
         room = Room.objects.get(pk=room_id)
         user = User.objects.get(pk=request.user.id)
         players = list(room.players.values_list('username', flat=True))
+        room.next_round_trigger = False
+        room.save()
         is_host = False
         if user == room.host:
             is_host = True
@@ -252,6 +255,8 @@ def game_control(request, room_id):
         room.card_index = None
         room.voting = False
         room.votes_casted = 0
+        room.current_round = 0
+        room.next_round_trigger = True
         room.save()
 
     if room.is_running:
@@ -270,27 +275,50 @@ def game_control(request, room_id):
                 return JsonResponse({"error": "output returned unknown key"}, status=400)
         elif command == 'vote':
             if request.user.voted == None:
-                try:
-                    vp = body.get('voted_player')
-                    voted_player = User.objects.get(username=vp)
-                except User.DoesNotExist:
-                    return JsonResponse({"error": "voted player does not exist"}, status=400)
-                if voted_player == request.user:
-                    return JsonResponse({'error': f"You cannot vote for yourself"}, status=400)
-                voted_player.votes += 1
-                room.votes_casted += 1
-                request.user.voted = voted_player
-                voted_player.save()
-                request.user.save()
-                room.save()
-                # figure out who has the most votes
-                # calculate_votes(request, room)
-                return JsonResponse({'success': f"successfully voted for {voted_player.username}"}, status=201)
+                if not request.user.voted_out:
+                    try:
+                        vp = body.get('voted_player')
+                        voted_player = User.objects.get(username=vp)
+                    except User.DoesNotExist:
+                        return JsonResponse({"error": "voted player does not exist"}, status=400)
+                    if voted_player == request.user:
+                        return JsonResponse({'error': f"You cannot vote for yourself"}, status=400)
+                    voted_player.votes += 1
+                    room.votes_casted += 1
+                    request.user.voted = voted_player
+                    voted_player.save()
+                    request.user.save()
+                    room.save()
+                    return JsonResponse({'success': f"successfully voted for {voted_player.username}"}, status=201)
+                else:
+                    return JsonResponse({'error': f"You have already been voted out. Please wait for the next game to start"}, status=400)
             else:
                 return JsonResponse({'error': f"You already have voted. You cannot vote twice"}, status=400)
         elif command == 'end_game':
             end_game()
             return JsonResponse({"success": "Game ended successfully"}, status=201)
+        elif command == 'next_round':
+            try:
+                np = body.get('next_player')
+                next_player = User.objects.get(username=np)
+            except User.DoesNotExist:
+                return JsonResponse({'error': f'No user found with given next player name'})
+            
+            room.current_round += 1
+            room.current_player = next_player
+            room.next_round_trigger = True
+            room.voting = False
+            room.selected_category = Room.Categories.NONE
+            room.votes_casted = 0
+            room.save()
+
+            for p in room.players.all():
+                p.voted = None
+                p.votes = 0
+                p.save()
+
+            # return redirect('room', room_id=room.id)
+            return JsonResponse({'success': f'Updated to next round successfully'})
 
 
 @login_required(login_url='login')
@@ -379,6 +407,7 @@ def room_control(request, room_id):
         body = json.loads(request.body)
         command = body.get('command')
         players = body.get('players') if body.get('players') else None
+
         if command == 'leave':
             if user == room.host:
                 return JsonResponse({"error": "You are host, can't leave room"}, status=400)
@@ -405,6 +434,7 @@ def room_control(request, room_id):
                     p.save()
                 room.delete()
                 return JsonResponse({"success": "You closed the room successfully"}, status=201)
+
         elif command == 'start':
             if user == room.host and room.is_running == False:
                 players_list = list()
@@ -462,6 +492,7 @@ def room_control(request, room_id):
 
                 room.current_player = User.objects.get(username=first_player)
                 room.is_running = True
+                room.current_round = 1
                 room.save()
                 game_control(request, room_id)
                 return JsonResponse({"success": "You started the room successfully"}, status=201)
@@ -504,6 +535,7 @@ def room_view(request, room_id):
         if user.username not in players and not user == room.host:
             request.session['redirect-message'] = 'You are not a player in this room'
             return redirect('index')
+
         return render(request, 'game/room.html', {
             'is_host': is_host,
             'host': room.host,
@@ -549,7 +581,7 @@ def vote_view(request, room_id):
             return redirect('room', room_id=room.id)
         return render(request, 'game/vote.html', {
             'room': room,
-            'players': players,
+            'players': valid_players,
             'is_host': is_host,
             'user': user,
             'display_votes': False
@@ -610,8 +642,6 @@ def display_votes(request, room_id):
         if player.role == User.Roles.IMPOSTER:
             imposter = player
 
-    #TODO: Add next round button and also display rounds
-    #TODO: make sure voted out players don't get to vote but still let them see what the questions are
 
     return render(request, 'game/display_votes.html', {
         'room': room,
@@ -619,3 +649,5 @@ def display_votes(request, room_id):
         'is_host': is_host,
         'imposter': imposter
     })
+
+

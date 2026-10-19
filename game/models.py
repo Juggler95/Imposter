@@ -30,6 +30,8 @@ class Room(models.Model):
     is_running = models.BooleanField(default=False)
     players = models.ManyToManyField(User, blank=True, null=True, related_name="room_players")
     rounds = models.PositiveIntegerField(default=3)
+    current_round = models.PositiveIntegerField(default=0)
     voting = models.BooleanField(default=False)
     votes_casted = models.PositiveIntegerField(default=0)
     selected_category = models.CharField(choices=Categories, default=Categories.NONE, max_length=10, null=True, blank=True)
+    next_round_trigger = models.BooleanField(default=False)

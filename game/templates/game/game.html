@@ -7,6 +7,7 @@
     {% if room.is_running %}
       {% if user.is_authenticated %}
         <h1>Role: {{user.role}}</h1>
+        <h2>Round: {{room.current_round}}</h2>
         {% if user.role == 'standard' %}
           <p>{{card}}</p>
         {% elif user.role == 'imposter' %}
@@ -20,6 +21,7 @@
       </form>
       <button type="button" id="end-game-btn" data-room_id="{{room.id}}" class="btn btn-danger">End Game</button>
     {% endif %}
+    <button type="button" id="refresh" class="btn btn-primary">Refresh Page</button>
 {% endblock %}
 {% block script %}
   <script src="{% static 'game/main.js' %}"></script>

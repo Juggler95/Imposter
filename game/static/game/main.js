@@ -41,6 +41,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  const refreshPageBtn = document.getElementById('refresh');
+  refreshPageBtn?.addEventListener('click', function(){
+    console.log("refresh");
+    location.reload()
+  });
+
   document.querySelectorAll('.categories').forEach((button) => {
     button.addEventListener('click', function() {
       const container = button.parentNode
@@ -57,7 +63,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   if(document.getElementById('redirect-to-game') !== null){
-    window.location.href = `game/${document.getElementById('redirect-to-game').dataset.room_id}`
+    window.location.href = `game/${document.getElementById('redirect-to-game').dataset.room_id}`;
+  }
+  if(document.getElementById('redirect-to-next-round') !== null){
+    window.location.href = `/room:${document.getElementById('redirect-to-next-round').dataset.room_id}`;
   }
 
   document.querySelectorAll('.kick-player').forEach((button) => {
@@ -75,6 +84,11 @@ document.addEventListener("DOMContentLoaded", () => {
       vote(container.dataset.room_id, button.dataset.vote_player);
       // console.log(container.dataset.current_user);
     });
+  });
+
+  document.getElementById('next-round-btn')?.addEventListener('click', function(){
+    next_player = document.getElementById('starting-player-selector').value;
+    nextRound(this.dataset.room_id, next_player);
   });
 });
 
@@ -169,6 +183,30 @@ async function vote(room_id, voted_player){
     const result = await response.json();
     console.log(result);
     window.location.href = window.location.href;
+  } catch (error){
+    console.error(error)
+  }
+}
+
+async function nextRound(room_id, next_player){
+  const url = `game_control/${room_id}`;
+  try{
+    const response = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        command: "next_round",
+        next_player: next_player
+      }),
+      headers: { "X-CSRFToken": csrftoken },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+    const result = await response.json();
+    console.log(result);
+    window.location.href = window.location.href;
+    // window.location.href = `/room:${room_id}`
   } catch (error){
     console.error(error)
   }

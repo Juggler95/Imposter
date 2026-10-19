@@ -7,13 +7,17 @@
     {% if room.is_running %}
       {% if user.is_authenticated %}
         <h1>Discuss and Vote</h1>
+        <h2>Round: {{room.current_round}}</h2>
+        <h3>Role: {{user.role}}</h3>
         {% if user.voted_out == False %}
 
             {% if user.voted == None %}
               <div data-current_user="{{user.username}}" data-room_id="{{room.id}}">
                 {% for player in players %}
-                  {% if not player == user.username %}
-                    <button type="button" class='vote-btn btn btn-primary' data-vote_player={{player}}>{{player}}</button>
+                  {% if not player.username == user.username %}
+                    {% if player.voted_out == False %}
+                      <button type="button" class='vote-btn btn btn-danger' data-vote_player={{player}}>{{player}}</button>
+                    {% endif %}
                   {% endif %}
                 {% endfor %}
               </div>
@@ -22,6 +26,7 @@
             {% endif %}
 
         {% endif %}
+        <button class="btn btn-primary" type="button" id="refresh">Refresh Page</button>
       {% endif %}
     {% endif %}
 

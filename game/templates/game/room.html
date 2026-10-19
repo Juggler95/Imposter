@@ -27,6 +27,8 @@
               <p>Imposter Count: {{room.imposter_count}}</p>
               <p>Rounds: {{room.rounds}}</p>
 
+              <button class="btn btn-primary" type="button" id="refresh">Refresh Page</button>
+
               {% if not is_host %}
                 <button type="button" id="leave-room-btn" class="btn btn-danger">Leave Room</button>
               {% else %}
@@ -47,18 +49,22 @@
       <!-- Game in progress -->
       {% if user.is_authenticated %}
         {% if room.selected_category == 'none' or room.selected_category == None %}
-          <h2>Role: {{user.role}}</h2>
+          <h1>Role: {{user.role}}</h1>
+          <h2>Round: {{room.current_round}}</h2>
+
           {% if user == room.current_player %}
             <div data-room_id="{{room.id}}">
               <h3>Select Category</h3>
-              <button type="button" class="categories" id="point">Point</button>
-              <button type="button" class="categories" id="words">Words</button>
-              <button type="button" class="categories" id="fingers">Fingers</button>
-              <button type="button" class="categories" id="hands">Hands</button>
+              <button type="button" class="categories btn btn-success" id="point">Point</button>
+              <button type="button" class="categories btn btn-success" id="words">Words</button>
+              <button type="button" class="categories btn btn-success" id="fingers">Fingers</button>
+              <button type="button" class="categories btn btn-success" id="hands">Hands</button>
             </div>
           {% else %}
             <p>{{room.current_player}} is selecting the category</p>
           {% endif %}
+
+        <button type="button" class="btn btn-primary" id="refresh">Refresh Page</button>
         {% else %}
           <span data-room_id="{{room.id}}" id="redirect-to-game"></span>
         {% endif %}
