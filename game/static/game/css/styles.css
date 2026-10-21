@@ -2,17 +2,114 @@
   align-items: center;
 }
 
+/* Index */
+#join-room-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#join-room-form{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+#join-room-form>input[name=join_code]{
+  padding: 1rem;
+}
+
+#join-room-form>input[type=submit]{
+  width: 100%;
+}
+
+#current-room-card-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+#current-room-card{
+  display: flex; 
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: lightgray;
+  max-width: 15rem;
+  padding: 2rem;
+  border-radius: 2rem;
+}
+
 /* room view */
+.room-content-container{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#host-info{
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2rem;
+}
+
+#room-info{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
 #room-players-list-container{
   padding: 0;
   margin: 0;
 }
 
 .player-list-item-container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
   border: 2px solid black;
   border-radius: 0.5rem;
-  padding: 5px;
+  padding-inline: 20px;
   margin-bottom: 1rem;
-  max-width: 10rem;
 }
 
+.player-list-item-container>p{
+  margin-top: 14%;
+}
+
+#starting-info{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+#starting-player-form{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#starting-player-selector{
+  background-color: #007BFF;
+  outline: none;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 2px solid black;
+}
+
+#start-room-btn{
+  width: 80%;
+}

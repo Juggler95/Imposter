@@ -3,18 +3,21 @@
   {% if message %}
     <p>{{message}}</p>
   {% endif %}
-  <div>
+  <div id="join-room-container">
     <h1>Join Room</h1>
-    <form autocomplete=off action="{% url 'join' %}" method='get'>
+    <form autocomplete=off action="{% url 'join' %}" method='get' id="join-room-form">
       <input type="text" name="join_code" placeholder="Room Code" maxlength="10" minlength="4" required>
-      <input type="submit" name="submit" value="Join">
+      <input class="btn btn-primary" type="submit" name="submit" value="Join">
     </form>
   </div>
   {% if room %}
-    <div>
-      <p>Host: {{room.host}}</p>
-      <p>Code: {{room.code}}</p>
-      <a href="{% url 'room' room_id=room.id %}">Enter back into room.</a>
+    <div id="current-room-card-container">
+      <h3>Current room</h3>
+      <div id="current-room-card">        
+        <p>Host: {{room.host}}</p>
+        <p>Code: {{room.code}}</p>
+        <a href="{% url 'room' room_id=room.id %}">Enter back into room.</a>
+      </div>
     </div>
   {% endif %}
 {% endblock %}

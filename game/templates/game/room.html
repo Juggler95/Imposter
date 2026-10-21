@@ -6,44 +6,54 @@
   {% endif %}
     {% if not room.is_running %}
       {% if user.is_authenticated %}
-          <div class="room-content-container" data-room_id="{{room.id}}" data-username='{{user.username}}'>
-              <h1>Host: {{host}}</h1>
-              {% if is_host %}
-                <button type="button" id="close-room-btn" class="btn btn-danger">Close Room</button>
-              {% endif %}
-              <h3>Players:</h3>
-              <ul id="room-players-list-container">
-                {% for player in players %}
-                  <div class="player-list-item-container">
-                    <p>{{player}}</p>
-                    {% if is_host %}
-                      {% if not player == room.host.username %}
-                        <button type="button" data-player="{{player}}" data-room_id="{{room.id}}" class="kick-player btn btn-outline-danger btn-sm">Kick</button>
-                      {% endif %}
-                    {% endif %}
-                  </div>
-                {% endfor %}
-              </ul>
-              <p>Imposter Count: {{room.imposter_count}}</p>
-              <p>Rounds: {{room.rounds}}</p>
 
-              <button class="btn btn-primary" type="button" id="refresh">Refresh Page</button>
+          <div class="room-content-container" data-room_id="{{room.id}}" data-username='{{user.username}}'>
+
+              <div id="host-info" data-room_id="{{room.id}}">
+                <h1>Host: {{host}}</h1>
+                {% if is_host %}
+                  <button type="button" id="close-room-btn" class="btn btn-danger">Close Room</button>
+                {% endif %}
+              </div>
+
+              <div id="room-info">
+                <h2>Players:</h2>
+                <ul id="room-players-list-container">
+                  {% for player in players %}
+                    <div class="player-list-item-container">
+                      <p>{{player}}</p>
+                      {% if is_host %}
+                        {% if not player == room.host.username %}
+                          <button type="button" data-player="{{player}}" data-room_id="{{room.id}}" class="kick-player btn btn-outline-danger btn-sm">Kick</button>
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                </ul>
+                <p>Imposter Count: {{room.imposter_count}}</p>
+                <p>Rounds: {{room.rounds}}</p>
+
+                <button class="btn btn-primary" type="button" id="refresh">Refresh Page</button>
+              </div>
 
               {% if not is_host %}
                 <button type="button" id="leave-room-btn" class="btn btn-danger">Leave Room</button>
               {% else %}
-                <form>
-                  <h3>Select starting player</h3>
-                  <select id="starting-player-selector" data-players="{{players}}" >
-                    <option selected='selected' value="default" disabled>Select a starting player</option>
-                    {% for player in players %}
-                      <option value="{{player}}">{{player}}</option>
-                    {% endfor %}
-                  </select>
-                </form>
-                <button type="button" class="btn btn-success" id="start-room-btn">Start</button>
+                <div id="starting-info" data-username='{{user.username}}' data-room_id="{{room.id}}">
+                  <form id="starting-player-form">
+                    <h3>Select starting player</h3>
+                    <select id="starting-player-selector" data-players="{{players}}" >
+                      <option selected='selected' value="default" disabled>Select a starting player</option>
+                      {% for player in players %}
+                        <option value="{{player}}">{{player}}</option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                  <button type="button" class="btn btn-success" id="start-room-btn">Start</button>
+                </div>
               {% endif %}
           </div>
+
       {% endif %}
     {% else %}
       <!-- Game in progress -->
