@@ -59,28 +59,37 @@
       <!-- Game in progress -->
       {% if user.is_authenticated %}
         {% if room.selected_category == 'none' or room.selected_category == None %}
-          <h1>Role: {{user.role}}</h1>
-          <h2>Round: {{room.current_round}}</h2>
+          <div id="role-page-container">
+            <h1>Role: {{user.role}}</h1>
+            <h2>Round: {{room.current_round}}</h2>
 
-          {% if user == room.current_player %}
-            <div data-room_id="{{room.id}}">
-              <h3>Select Category</h3>
-              <button type="button" class="categories btn btn-success" id="point">Point</button>
-              <button type="button" class="categories btn btn-success" id="words">Words</button>
-              <button type="button" class="categories btn btn-success" id="fingers">Fingers</button>
-              <button type="button" class="categories btn btn-success" id="hands">Hands</button>
-            </div>
-          {% else %}
-            <p>{{room.current_player}} is selecting the category</p>
-          {% endif %}
+            {% if user == room.current_player %}
+              <div data-room_id="{{room.id}}" id="category-container">
+                <h3>Select Category</h3>
+                <div  data-room_id="{{room.id}}" id="category-btn-container">
+                  <button type="button" class="categories btn btn-success" id="point">Point</button>
+                  <button type="button" class="categories btn btn-success" id="words">Words</button>
+                  <button type="button" class="categories btn btn-success" id="fingers">Fingers</button>
+                  <button type="button" class="categories btn btn-success" id="hands">Hands</button>
+                </div>
+              </div>
+            {% else %}
+              <p>{{room.current_player}} is selecting the category</p>
+            {% endif %}
 
-        <button type="button" class="btn btn-primary" id="refresh">Refresh Page</button>
+            <button type="button" class="btn btn-primary" id="refresh">Refresh Page</button>
+
+
+            {% if is_host %}
+              <button type="button" id="end-game-btn" class="btn btn-danger" data-room_id="{{room.id}}">End Game</button>
+            {% endif %}
+          </div>
+
         {% else %}
           <span data-room_id="{{room.id}}" id="redirect-to-game"></span>
         {% endif %}
-        {% if is_host %}
-          <button type="button" id="end-game-btn" class="btn btn-danger" data-room_id="{{room.id}}">End Game</button>
-        {% endif %}
+
+
       {% endif %}
     {% endif %}
 {% endblock %}

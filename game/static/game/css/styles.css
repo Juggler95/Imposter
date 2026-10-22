@@ -45,6 +45,39 @@
   border-radius: 2rem;
 }
 
+/* Create room view */
+#create-room-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#create-room-form{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#create-room-form>input[name=create_code]{
+  margin-bottom: 2rem;
+  padding: 1rem;
+}
+
+#create-room-form>label[for=rounds]{
+  font-size: 1.5rem;
+}
+
+#create-room-form>input[name=rounds]{
+  padding: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+#create-room-form>input[type=submit]{
+  width: 90%;
+}
+
 /* room view */
 .room-content-container{
   display: flex;
@@ -112,4 +145,55 @@
 
 #start-room-btn{
   width: 80%;
+}
+
+/* category select page */
+#role-page-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+#category-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+#category-btn-container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Game view */
+#game-container{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#role-info-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#host-game-controls{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#game-container>#refresh{
+  margin-top: 1rem;
 }

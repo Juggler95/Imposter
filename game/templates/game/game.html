@@ -5,23 +5,34 @@
     <p>{{message}}</p>
   {% endif %}
     {% if room.is_running %}
-      {% if user.is_authenticated %}
-        <h1>Role: {{user.role}}</h1>
-        <h2>Round: {{room.current_round}}</h2>
-        {% if user.role == 'standard' %}
-          <p>{{card}}</p>
-        {% elif user.role == 'imposter' %}
-          <p>{{imposter_card}}</p>
+
+      <div id="game-container">
+        {% if user.is_authenticated %}
+          <div id="role-info-container">
+            <h1>Role: {{user.role}}</h1>
+            <h2>Round: {{room.current_round}}</h2>
+            {% if user.role == 'standard' %}
+              <p>{{card}}</p>
+            {% elif user.role == 'imposter' %}
+              <p>{{imposter_card}}</p>
+            {% endif %}
+          </div>
         {% endif %}
-      {% endif %}
+
+        {% if is_host %}
+          <div id="host-game-controls">
+            <form action="{% url 'vote' room_id=room.id %}" method="GET">
+                <button type="submit" id="start-voting-btn" class="btn btn-success">Start Voting</button>
+            </form>
+            <button type="button" id="end-game-btn" data-room_id="{{room.id}}" class="btn btn-danger">End Game</button>
+          </div>
+        {% endif %}
+
+        <button type="button" id="refresh" class="btn btn-primary">Refresh Page</button>
+      </div>
+
     {% endif %}
-    {% if is_host %}
-      <form action="{% url 'vote' room_id=room.id %}" method="GET">
-          <button type="submit" id="start-voting-btn" class="btn btn-success">Start Voting</button>
-      </form>
-      <button type="button" id="end-game-btn" data-room_id="{{room.id}}" class="btn btn-danger">End Game</button>
-    {% endif %}
-    <button type="button" id="refresh" class="btn btn-primary">Refresh Page</button>
+
 {% endblock %}
 {% block script %}
   <script src="{% static 'game/main.js' %}"></script>
