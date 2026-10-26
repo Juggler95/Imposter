@@ -51,15 +51,10 @@ def create_room(request):
         code = request.POST['create_code']
         try:
             rounds = int(request.POST['rounds'])
-            # imposter_count = int(request.POST['imposter_count'])
         except:
             return render(request, 'game/create_room.html', {
                 "message": 'Could not cast rounds/imposter_count to int'
             })
-        # if imposter_count < 1:
-        #     return render(request, 'game/create_room.html', {
-        #         "message": 'Imposter count can not be less than 1'
-        #     })
         if rounds < 1:
             return render(request, 'game/create_room.html', {
                 "message": 'Rounds can not be less than 1'
@@ -76,11 +71,9 @@ def create_room(request):
             elif host in room.players.all():
                 request.session['redirect-message'] = f'You are already a player in another room with host: {room.host} and code: {room.code}'
                 return redirect('index')
-        # room = Room.objects.create(host=host, code=code, imposter_count=imposter_count, rounds=rounds)
         room = Room.objects.create(host=host, code=code, rounds=rounds)
         room.save()
         room.players.add(host)
-        # return HttpResponse(f'host: {host}, code: {code}, imposter count: {imposter_count}, rounds: {rounds}, players: {room.players.all()}')
         return redirect('room', room_id=room.id)
     else:
         if not request.user.current_room == None:

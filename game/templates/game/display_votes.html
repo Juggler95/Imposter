@@ -4,81 +4,98 @@
   {% if message %}
     <p>{{message}}</p>
   {% endif %}
+
     {% if room.is_running %}
       {% if user.is_authenticated %}
-        <h1>Votes</h1>
-        <h2>Round: {{room.current_round}}</h2>
-        {% if room.current_round != room.rounds %}
-          {% for player in valid_players %}
-            {% if player.voted_out %}
-              <div style="background-color: red;">
-                <h3>{{player.username}}</h3>
-                <p>Votes: {{player.votes}}. Role: {{player.role}}</p>
-              </div>
-            {% else %}
-              <div style="background-color: green;">
-                <h3>{{player.username}}</h3>
-                <p>Votes: {{player.votes}}</p>
-              </div>
-            {% endif %}
-         {% endfor %}
-        {% else %}
 
-          {% for player in valid_players %}
-            {% if player.voted_out %}
-              <div style="background-color: red;">
-                <h3>{{player.username}}</h3>
-                <p>Votes: {{player.votes}}. Role: {{player.role}}</p>
-              </div>
-            {% elif player.role == 'imposter' %}
-              <div style="background-color: green;">
-                <h3>{{player.username}}</h3>
-                <p>Votes: {{player.votes}}</p>
-                <h3>Role: {{player.role}}</h3>
-              </div>
-            {% else %}
-              <div style="background-color: orange;">
-                <h3>{{player.username}}</h3>
-                <p>Votes: {{player.votes}}. Role: {{player.role}}</p>
-              </div>
-            {% endif %}
-          {% endfor %}
+        <div id="display-votes-page-container">
+          <h1>Votes</h1>
+          <h2>Round: {{room.current_round}}</h2>
+          {% if room.current_round != room.rounds %}
+            <div class="display-players-container">
+              {% for player in valid_players %}
+                {% if player.voted_out %}
+                  <div style="background-color: red;" class="display-player">
+                    <h3>{{player.username}}</h3>
+                    <p>Votes: {{player.votes}}. Role: {{player.role}}</p>
+                  </div>
+                {% else %}
+                  <div style="background-color: green;" class="display-player">
+                    <h3>{{player.username}}</h3>
+                    <p>Votes: {{player.votes}}</p>
+                  </div>
+                {% endif %}
+             {% endfor %}
+            </div>
+          {% else %}
 
-        {% endif %}
+            <div class="display-players-container">
+              {% for player in valid_players %}
+                {% if player.voted_out %}
+                  <div style="background-color: red;" class="display-player">
+                    <h3>{{player.username}}</h3>
+                    <p>Votes: {{player.votes}}. Role: {{player.role}}</p>
+                  </div>
+                {% elif player.role == 'imposter' %}
+                  <div style="background-color: green;" class="display-player">
+                    <h3>{{player.username}}</h3>
+                    <p>Votes: {{player.votes}}</p>
+                    <h3>Role: {{player.role}}</h3>
+                  </div>
+                {% else %}
+                  <div style="background-color: orange;" class="display-player">
+                    <h3>{{player.username}}</h3>
+                    <p>Votes: {{player.votes}}. Role: {{player.role}}</p>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+
+          {% endif %}
+        </div>
+
       {% endif %}
     {% endif %}
 
 
 
-    {% if imposter.voted_out %}
-      <p>You have found the imposter</p>
-    {% else %}
-      {% if room.current_round != room.rounds %}
-        {% if is_host %}
-         <h3>Select next player</h3>
-          <select id="starting-player-selector" data-players="{{valid_players}}" >
-            <option selected='selected' value="default" disabled>Select a starting player</option>
-            {% for player in valid_players %}
-              {% if not player.voted_out %}
-                <option value="{{player}}">{{player}}</option>
-              {% endif %}
-            {% endfor %}
-          </select>
-  
-        <button type="button" id="next-round-btn" class="btn btn-success" data-room_id={{room.id}}>Next Round</button>
-        {% endif %}
+    <div id="display-vote-controls">
+      {% if imposter.voted_out %}
+        <p>You have found the imposter</p>
       {% else %}
-        <h2>The Imposter was not caught and have won!</h2>
-      {% endif %}
-    {% endif %}
-    {% if room.next_round_trigger == True %}
-      <span id="redirect-to-next-round" data-room_id={{room.id}}></span>
-    {% endif %}
-    <button class="btn btn-primary" type="button" id="refresh">Refresh Page</button>
+        {% if room.current_round != room.rounds %}
+          {% if is_host %}
+            <div id="display-vote-host-controls">
+             <h3>Select next player</h3>
+              <select id="starting-player-selector" data-players="{{valid_players}}" >
+                <option selected='selected' value="default" disabled>Select a starting player</option>
+                {% for player in valid_players %}
+                  {% if not player.voted_out %}
+                    <option value="{{player}}">{{player}}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+    
+          <button type="button" id="next-round-btn" class="btn btn-success" data-room_id={{room.id}}>Next Round</button>
+          {% endif %}
 
-    {% if is_host %}
-      <button type="button" id="end-game-btn" class="btn btn-danger" data-room_id="{{room.id}}">End Game</button>
-    {% endif %}
+        {% else %}
+          <h2>The Imposter was not caught and have won!</h2>
+        {% endif %}
+
+      {% endif %}
+
+      {% if room.next_round_trigger == True %}
+        <span id="redirect-to-next-round" data-room_id={{room.id}}></span>
+      {% endif %}
+
+      <button class="btn btn-primary" type="button" id="refresh">Refresh Page</button>
+
+      {% if is_host %}
+        <button type="button" id="end-game-btn" class="btn btn-danger" data-room_id="{{room.id}}">End Game</button>
+      {% endif %}
+    </div>
 
 {% endblock %}
 {% block script %}
