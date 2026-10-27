@@ -11,9 +11,9 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import User, Room
 
-POINT = ['Point a the the person to your left', 'Point at the person you think knows the most digits of pi']
-HANDS = ['Raise your hand if your name starts with a letter between "A-M" in the alphabet', 'Raise your hand if your name starts with a letter between "N-A" in the alphabet']
-FINGERS = ["Raise 0 fingers", "Raise the amount of fingers as reality shows you are currently invested into"]
+POINT = ['Point a the the person to your left', 'Point at the person you think knows the most digits of pi', 'Point at the person to your right']
+HANDS = ['Raise your hand if your name starts with a letter between "A-M" in the alphabet', 'Raise your hand if your name starts with a letter between "N-A" in the alphabet', 'Raise your hand', 'Don\'t raise your hand']
+FINGERS = ['Raise 0 fingers', 'Raise the amount of fingers as reality shows you are currently invested into', 'Raise the amount of fingers of your answer: (Pick a num 1 to 13, add 4, double the result, subtract 6 and divide by 2 then subtract your orignal number)']
 WORDS = ["Name your favorite Super Hero", "Say something you enjoy doing"]
 IMPOSTER_WORDS = ["Name a character that has Super Powers", "Say something you don't enjoy doing"]
 
@@ -406,6 +406,8 @@ def room_control(request, room_id):
                 return JsonResponse({"error": "You are host, can't leave room"}, status=400)
             for player in room.players.all():
                 if user == player:
+                    if room.is_running:
+                        return JsonResponse({"error": "Room already in progress. Please wait to leave till game ends"}, status=400)
                     room.players.remove(user)
                     room.save()
                     players = list(room.players.values_list('username', flat=True))
