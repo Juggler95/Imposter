@@ -1,0 +1,15 @@
+services:
+  db:
+    image: mariadb:lts
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: imposter_db
+      MARIADB_ROOT_PASSWORD: root-pwd
+      MARIADB_USER: imposter_user
+      MARIADB_PASSWORD: pwd
+    ports:
+      - "3306:3306"
+    volumes:
+      - imposter_mariadb-data:/var/lib/mysql
+volumes:
+  imposter_mariadb-data:

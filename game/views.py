@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import User, Room
 
 POINT = ['Point a the the person to your left', 'Point at the person you think knows the most digits of pi', 'Point at the person to your right']
-HANDS = ['Raise your hand if your name starts with a letter between "A-M" in the alphabet', 'Raise your hand if your name starts with a letter between "N-A" in the alphabet', 'Raise your hand', 'Don\'t raise your hand']
+HANDS = ['Raise your hand if your name starts with a letter between "A-M" in the alphabet', 'Raise your hand if your name starts with a letter between "N-Z" in the alphabet', 'Raise your hand', 'Don\'t raise your hand']
 FINGERS = ['Raise 0 fingers', 'Raise the amount of fingers as reality shows you are currently invested into', 'Raise the amount of fingers of your answer: (Pick a num 1 to 13, add 4, double the result, subtract 6 and divide by 2 then subtract your orignal number)']
 WORDS = ["Name your favorite Super Hero", "Say something you enjoy doing"]
 IMPOSTER_WORDS = ["Name a character that has Super Powers", "Say something you don't enjoy doing"]
@@ -484,6 +484,10 @@ def room_control(request, room_id):
                 if len(backend_players) <= 1:
                     return JsonResponse({"error": f"Cannot start the room with 1 or less people in the room"}, status=400)
 
+                # make sure there are enough player for the amount of rounds
+                if len(backend_players) <= room.rounds + 1:
+                    return JsonResponse({"error": f"You need to have 2 more players than there are rounds"}, status=400)
+
 
                 room.current_player = User.objects.get(username=first_player)
                 room.is_running = True
@@ -627,10 +631,12 @@ def display_votes(request, room_id):
         return redirect('room', room_id=room.id)
     players = room.players.all()
     valid_players = list()
+    all_players = list()
     calculate_votes(request, room)
     for p in players:
         if p.voted != None:
             valid_players.append(p)
+        all_players.append(p)
 
     
     for player in players:
@@ -641,6 +647,7 @@ def display_votes(request, room_id):
     return render(request, 'game/display_votes.html', {
         'room': room,
         'valid_players': valid_players,
+        'all_players': all_players,
         'is_host': is_host,
         'imposter': imposter
     })

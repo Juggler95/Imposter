@@ -30,7 +30,7 @@
           {% else %}
 
             <div class="display-players-container">
-              {% for player in valid_players %}
+              {% for player in all_players %}
                 {% if player.voted_out %}
                   <div style="background-color: red;" class="display-player">
                     <h3>{{player.username}}</h3>

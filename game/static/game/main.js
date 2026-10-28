@@ -268,7 +268,8 @@ async function startRoom(room_id, player_selector){
         alert(`${output.error}. Please try to start the game again`);
         window.location.href = window.location.href;
       }
-      throw new Error(`Response status:`)
+      alert(`${output.error}`);
+      throw new Error(`Response status:`);
     }
     
     const result = await response.json();
